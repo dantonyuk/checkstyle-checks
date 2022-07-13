@@ -19,6 +19,5 @@ def collect(ast: DetailAST): String =
       ast.text
     case STAR =>
       "*"
-    case _ =>
-      throw IllegalStateException(
-        s"Invalid type in ${ast.text} (${ast.line}, ${ast.column}): ${ast.astType}")
+    case _ => // METHOD_CALL, LITERAL_NEW...
+      "~" // ignore
