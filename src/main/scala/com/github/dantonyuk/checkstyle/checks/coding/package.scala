@@ -21,4 +21,4 @@ def collect(ast: DetailAST): String =
       "*"
     case _ =>
       throw IllegalStateException(
-        s"Invalid type in ${ast.text} (${ast.last}, ${ast.column}): ${ast.astType}")
+        s"Invalid type in ${ast.text} (${ast.line}, ${ast.column}): ${ast.astType}")
