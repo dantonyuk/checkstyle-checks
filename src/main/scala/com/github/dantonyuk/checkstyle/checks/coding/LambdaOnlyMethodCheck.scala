@@ -9,19 +9,34 @@ class LambdaOnlyMethodCheck(_methods: String) extends AbstractCheck:
 
   def this() = this(DEFAULT_METHODS)
 
-  private val methods = _methods.split(raw"\s*,\s*").map(Import(_))
   private val matchingCalls = new scala.collection.mutable.HashSet[String]
+  private val methods =
+    """(?<=^|[^\w.])([\w.]+?)\.(\w+)\.(\w+)(?=[^\w.]|$)""".r
+      .findAllMatchIn(_methods)
+      .map(_.subgroups)
+      .toArray
 
   override def beginTree(rootAst: DetailAST) =
     matchingCalls.clear()
 
   override def visitToken(ast: DetailAST) =
-    ast match
-      case Import(i) =>
-        matchingCalls ++= methods.flatMap(i.extractCall(_).toSeq)
-      case MethodCall(m) if matchingCalls(m) =>
-        log(ast.line, ast.column, s"Method $m should be used as method reference only");
-      case _ =>
+    ast.astType match
+      case IMPORT =>
+        val Array(ip, ic) = collect(ast.findFirstToken(DOT)).split("\\.(?=[^.]+$)")
+        for (
+          List(p, c, m) <- methods
+          if p == ip && (c == ic || ic == "*")
+        ) matchingCalls += s"$c.$m"
+      case STATIC_IMPORT =>
+        val Array(ip, ic, im) = collect(ast.findFirstToken(DOT)).split("\\.(?=([^.]+\\.)?[^.]+$)")
+        for (
+          List(p, c, m) <- methods
+          if p == ip && c == ic && (m == im || im == "*")
+        ) matchingCalls += m
+      case METHOD_CALL =>
+        val method = collect(ast.first)
+        if (matchingCalls(method))
+          log(ast.line, ast.column, s"Method $method should be used as method reference only");
 
   override def getAcceptableTokens: Array[Int] =
     getRequiredTokens
