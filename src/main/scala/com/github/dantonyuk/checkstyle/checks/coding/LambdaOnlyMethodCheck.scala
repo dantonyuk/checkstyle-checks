@@ -18,6 +18,10 @@ class LambdaOnlyMethodCheck(_methods: String) extends AbstractCheck:
 
   override def beginTree(rootAst: DetailAST) =
     matchingCalls.clear()
+    matchingCalls ++= methods.map { case List(p, c, m) => s"$p.$c.$m" }
+
+  override def finishTree(rootAst: DetailAST) =
+    println(matchingCalls)
 
   override def visitToken(ast: DetailAST) =
     ast.astType match
@@ -35,6 +39,7 @@ class LambdaOnlyMethodCheck(_methods: String) extends AbstractCheck:
         ) matchingCalls += m
       case METHOD_CALL =>
         val method = collect(ast.first)
+        println(s"Checking $method")
         if (matchingCalls(method))
           log(ast.line, ast.column, s"Method $method should be used as method reference only");
 
