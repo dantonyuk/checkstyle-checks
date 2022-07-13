@@ -54,5 +54,14 @@ class LambdaOnlyMethodCheckTest extends AbstractModuleTestSupport:
     val expected = Array.empty[String]
     verify(config, path, expected: _*)
 
+  @Test
+  def testFullNameCall =
+    val config = AbstractModuleTestSupport.createModuleConfig(classOf[LambdaOnlyMethodCheck])
+    val path = getPath("FullNameCall.java")
+    val expected = Array(
+      checkMsg(6, 30, "java.util.Objects.nonNull"),
+      checkMsg(10, 29, "java.util.Objects.isNull"))
+    verify(config, path, expected: _*)
+
   private[this] def checkMsg(line: Int, column: Int, method: String) =
     s"${line}:${column}: Method ${method} should be used as method reference only"
